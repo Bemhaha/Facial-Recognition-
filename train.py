@@ -87,20 +87,23 @@ tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, histogram
 checkpoint = ModelCheckpoint(filepath=chk_path,
                              save_best_only=True,
                              verbose=1,
-                             mode='min',
-                             moniter='val_loss')
+                             mode='max',
+                             monitor='val_accuracy')
 
-earlystop = EarlyStopping(monitor='val_loss', 
-                          min_delta=0, 
+earlystop = EarlyStopping(monitor='val_accuracy', 
+                          min_delta=0,
+                          mode='max', 
                           patience=3, 
                           verbose=1, 
                           restore_best_weights=True)
                         
-reduce_lr = ReduceLROnPlateau(monitor='val_loss', 
+reduce_lr = ReduceLROnPlateau(monitor='val_accuracy', 
                               factor=0.2, 
                               patience=6, 
-                              verbose=1, 
-                              min_delta=0.0001)
+                              verbose=1,
+                              mode='max', 
+                              min_delta=0.0001,
+                              min_lr=0.00005)
 
 csv_logger = CSVLogger('training.log')
 
@@ -111,7 +114,7 @@ validation_steps = test_set.n // test_set.batch_size
 
 hist = fernet.fit(x=training_set,
                  validation_data=test_set,
-                 epochs=60,
+                 epochs=64,
                  callbacks=callbacks,
                  steps_per_epoch=steps_per_epoch,
                  validation_steps=validation_steps)
@@ -121,7 +124,7 @@ hist_csv_file = 'history.csv'
 with open(hist_csv_file, mode='w') as f:
     hist_df.to_csv(f)
 
-np.save('my_history.npy',hist.history)
+np.save('history.npy',hist.history)
 #history=np.load('my_history.npy',allow_pickle='TRUE').item()
 
 train_loss, train_accu = fernet.evaluate(training_set)
